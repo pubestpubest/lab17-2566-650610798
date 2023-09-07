@@ -27,14 +27,14 @@ export const GET = async (request) => {
 
   //check if user provide one of 'studentId' or 'courseNo'
   //User must not provide both values, and must not provide nothing
-
-  // return NextResponse.json(
-  //   {
-  //     ok: false,
-  //     message: "Please provide either studentId or courseNo and not both!",
-  //   },
-  //   { status: 400 }
-  // );
+  if ((studentId && courseNo) || (!studentId && !courseNo))
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Please provide either studentId or courseNo and not both!",
+      },
+      { status: 400 }
+    );
 
   //get all courses enrolled by a student
   if (studentId) {
@@ -60,10 +60,15 @@ export const GET = async (request) => {
     const studentIdList = [];
     for (const enroll of DB.enrollments) {
       //your code here
+      if (enroll.courseNo === courseNo) studentIdList.push(enroll.studentId);
     }
 
     const students = [];
     //your code here
+    for (const studentIdNo of studentIdList) {
+      const std = DB.students.find((x) => x.studentId === studentIdNo);
+      students.push(std);
+    }
 
     return NextResponse.json({
       ok: true,
@@ -141,17 +146,23 @@ export const DELETE = async (request) => {
   const { studentId, courseNo } = body;
 
   //check if studentId and courseNo exist on enrollment
-
-  // return NextResponse.json(
-  //   {
-  //     ok: false,
-  //     message: "Enrollment does not exist",
-  //   },
-  //   { status: 404 }
-  // );
+  const found = DB.enrollments.find(
+    (x) => x.studentId === studentId && x.courseNo === courseNo
+  );
+  // const foundCou = DB.enrollments.find((x) => x.courseNo === courseNo);
+  if (!found)
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Enrollment does not exist",
+      },
+      { status: 404 }
+    );
 
   //perform deletion by using splice or array filter
-
+  DB.enrollments = DB.enrollments.filter(
+    (x) => x.studentId != studentId || x.courseNo != courseNo
+  );
   //if code reach here it means deletion is complete
   return NextResponse.json({
     ok: true,
